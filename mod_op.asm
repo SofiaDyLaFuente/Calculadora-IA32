@@ -1,8 +1,8 @@
 ; ============================================================
-; DIVISAO.ASM
-; Operação de divisão: lê os 2 números, calcula num1/num2,
-; imprime o resultado.
-; Compilar: nasm -f elf32 divisao.asm -o divisao.o
+; MOD_OP.ASM
+; Operação de módulo (resto da divisão): lê os 2 números,
+; calcula num1 % num2, imprime o resultado.
+; Compilar: nasm -f elf32 mod_op.asm -o mod_op.o
 ; ============================================================
 
 ; IMPORTS
@@ -11,7 +11,7 @@ extern read_number16
 extern read_number32
 extern print_number
 
-; MENSAGENS E VARIÁVEL DE PRECISÃO
+; MENSAGENS E VARIÁVEL DE PRECISÃO 
 extern msg_num1, len_num1
 extern msg_num2, len_num2
 extern msg_resultado, len_resultado
@@ -19,30 +19,29 @@ extern newline, len_newline
 extern precisao
  
 section .data
-    ; mensagem própria desta operação 
-    msg_div_zero    db "ERRO: DIVISAO POR ZERO", 10
+    msg_div_zero    db "ERRO: DIVISAO POR ZERO (MOD)", 10
     len_div_zero    equ $ - msg_div_zero
  
 section .text
-    global divisao
+    global mod_op
  
 ; ------------------------------------------------------------
-; divisao: sem parâmetros de entrada (lê tudo sozinha).
+; mod_op: sem parâmetros de entrada (lê tudo sozinha).
 ; Sem retorno de valor (imprime o resultado ela mesma).
 ;
 ; Variáveis locais:
 ;   [ebp-4]  = dividendo (num1)
 ;   [ebp-8]  = divisor   (num2)
-;   [ebp-12] = resultado (quociente)
+;   [ebp-12] = resultado (RESTO da divisão, não o quociente)
 ; ------------------------------------------------------------
-divisao:
+mod_op:
     push ebp
     mov ebp, esp
     sub esp, 12
  
     push len_num1
     push msg_num1
-    call print_string          ; "Digite o primeiro numero:"
+    call print_string               ; "Digite o primeiro numero:"
  
     cmp dword [precisao], 0
     je .ler16_a
@@ -51,11 +50,11 @@ divisao:
 .ler16_a:
     call read_number16
 .guardou_a:
-    mov [ebp-4], eax           ; Guarda o dividendo
+    mov [ebp-4], eax                ; Guarda o dividendo
  
     push len_num2
     push msg_num2
-    call print_string          ; "Digite o segundo numero:"
+    call print_string               ; "Digite o segundo numero:"
  
     cmp dword [precisao], 0
     je .ler16_b
@@ -64,18 +63,14 @@ divisao:
 .ler16_b:
     call read_number16
 .guardou_b:
-    mov [ebp-8], eax           ; Guarda o divisor
+    mov [ebp-8], eax                ; Guarda o divisor
  
     ; ========================================================
     ; .CALCULA
-    ; Checa divisor==0 ANTES de tudo (regra de ouro do IDIV) —
-    ; independe de ser 16 ou 32 bits, o valor 0 é 0 nos dois.
-    ;
-    ; Depois, bifurca conforme a precisão: o IDIV de 16 bits
-    ; divide DX:AX (precisa de CWD antes pra estender o sinal
-    ; de AX pra DX); o de 32 bits divide EDX:EAX (precisa de
-    ; CDQ). Sem isso, a divisão poderia usar lixo de DX/EDX e
-    ; dar resultado errado, mesmo sem crashar.
+    ; Igual à divisão (mesmo IDIV, mesma checagem de zero e
+    ; mesma bifurcação 16/32 bits), mas o resultado que nos
+    ; interessa é o RESTO: fica em DX (16 bits) ou EDX (32
+    ; bits), não em AX/EAX.
     ; ========================================================
     cmp dword [ebp-8], 0
     je .divisao_por_zero
@@ -86,39 +81,39 @@ divisao:
     ; --- caminho de 32 bits ---
     mov eax, [ebp-4]
     cdq                             ; Estende o sinal de EAX pra EDX:EAX
-    idiv dword [ebp-8]              ; EAX = quociente, EDX = resto (descartado)
-    mov [ebp-12], eax
+    idiv dword [ebp-8]              ; EAX = quociente (descartado), EDX = resto
+    mov [ebp-12], edx               ; Guarda o RESTO
     jmp .mostra
  
 .calcula16:
     ; --- caminho de 16 bits ---
     mov ax, word [ebp-4]
     cwd                             ; Estende o sinal de AX pra DX:AX
-    idiv word [ebp-8]               ; AX = quociente, DX = resto (descartado)
-    movsx eax, ax                   ; Estende o quociente de volta pra 32 bits
+    idiv word [ebp-8]               ; AX = quociente (descartado), DX = resto
+    movsx eax, dx                   ; Estende o RESTO (DX) de volta pra 32 bits
     mov [ebp-12], eax
  
 .mostra:
-    
-    ; MOSTRA O RESULTADO
+
+    ; MOSTRA RESULTADO
     
     push len_resultado
     push msg_resultado
-    call print_string          
+    call print_string               ; "Resultado: "
  
     push dword [ebp-12]
-    call print_number               ; Imprime o quociente
+    call print_number               ; Imprime o resto
  
     push len_newline
     push newline
-    call print_string               
+    call print_string          
  
     jmp .fim
  
 .divisao_por_zero:
     push len_div_zero
     push msg_div_zero
-    call print_string               ; "ERRO: DIVISAO POR ZERO"
+    call print_string               ; "ERRO: DIVISAO POR ZERO (MOD)"
  
 .fim:
     mov esp, ebp

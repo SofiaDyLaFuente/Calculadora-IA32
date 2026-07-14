@@ -21,15 +21,15 @@ extern precisao
 section .text
     global soma                 ; Exporta 'soma' para calculadora.asm poder chamá-la
 
-; ########################################################;
-; soma: sem parâmetros de entrada (ela lê tudo sozinha).  ;         
-; Sem valor de retorno (ela mesma imprime o resultado).   ;
-;                                                         ;
-; Variáveis locais (obrigatoriamente na pilha):           ;
-;   [ebp-4]  = primeiro número lido                       ;
-;   [ebp-8]  = segundo número lido                        ;
-;   [ebp-12] = resultado da soma                          ;
-; ########################################################;
+; ------------------------------------------------------------
+; soma: sem parâmetros de entrada (ela lê tudo sozinha).       
+; Sem valor de retorno (ela mesma imprime o resultado).   
+;                                                         
+; Variáveis locais (obrigatoriamente na pilha):           
+;   [ebp-4]  = primeiro número lido                       
+;   [ebp-8]  = segundo número lido                        
+;   [ebp-12] = resultado da soma                          
+; ------------------------------------------------------------
 
 soma: 
     push ebp
@@ -87,7 +87,7 @@ soma:
     mov ax, word [ebp-4]
     add ax, word [ebp-8]         ; seta OF se estourar os limites do int16
     jo .overflow
-    movsx eax, ax                 ; estende AX de volta pra 32 bits, pra print_number funcionar igual nos dois casos
+    movsx eax, ax                ; estende AX de volta pra 32 bits, pra print_number funcionar igual nos dois casos
     mov [ebp-12], eax
 
 .mostra:
