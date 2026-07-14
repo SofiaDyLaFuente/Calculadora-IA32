@@ -73,7 +73,7 @@ msg_num2        db "Digite o segundo número:", 10
 len_num2        equ $ - msg_num2
 msg_resultado   db "Resultado: "
 len_resultado   equ $ - msg_resultado
-msg_overflow    db "OCORREU OVERFLOW"
+msg_overflow    db "OCORREU OVERFLOW", 10
 len_overflow    equ $ - msg_overflow
 msg_enter       db "Pressione ENTER para continuar...", 10
 len_enter       equ $ - msg_enter
@@ -109,7 +109,7 @@ section .text
     global msg_num1, len_num1, msg_num2, len_num2
     global msg_resultado, len_resultado
     global msg_overflow, len_overflow
-    global newLine, len_newline
+    global newline, len_newline
     global precisao
 
 ; ############################################################;
@@ -172,6 +172,7 @@ _start:
     sub esp, 32         ; reserva 32 bytes na pilha pra descartar o ENTER
     lea eax, [esp]      
     push 32
+    push eax
     call read_string
     add esp, 32         ; libera o espaço reservado
 
@@ -256,10 +257,10 @@ executar_operacao:
 .soma:
     call soma
     jmp .fim
-.subtracao
+.subtracao:
     call subtracao
     jmp .fim 
-.multiplicacao
+.multiplicacao:
     call multiplicacao
     jmp .fim 
 .divisao:
@@ -268,7 +269,7 @@ executar_operacao:
 .exponenciacao:
     call exponenciacao
     jmp .fim
-.mod 
+.mod: 
     call mod_op
     jmp .fim 
 .fim:
@@ -291,8 +292,8 @@ print_string:
 
     mov eax, 4              ; identificador da syscall sys_write
     mov ebx, 1              ; arg1 = 1 (stdout, a tela)
-    mov ecx, [ebp+12]       ; arg2 = ponteiro pro texto
-    mov edx, [ebp+8]        ; arg3 = quantidade de bytes
+    mov ecx, [ebp+8]        ; arg2 = ponteiro pro texto
+    mov edx, [ebp+12]       ; arg3 = quantidade de bytes
     int 80h                 ; chama o kernel
 
     mov esp, ebp
@@ -316,14 +317,14 @@ read_string:
 
     mov eax, 3              ; identificador da syscall sys_read
     mov ebx, 0              ; arg1 = 0 (stdin, o teclado)
-    mov ecx, [ebp+12]       ; arg2 = buffer de destino
-    mov edx, [ebp+8]        ; arg3 = tamanho máximo
+    mov ecx, [ebp+8]        ; arg2 = buffer de destino
+    mov edx, [ebp+12]       ; arg3 = tamanho máximo
     int 80h                 ; eax = quantidade de bytes lidos, incluindo o \n
 
     dec eax                 ; desconta o \n da contagem
     cmp eax, 0
     jl .fim                 ; se não leu nada além do \n, não faz nada mais
-    mov ebx, [ebp+12]       
+    mov ebx, [ebp+8]       
     add ebx, eax
     mov byte [ebx], 0       ; troca o \n por um terminador 0 (vai ser útil pro parser)
 
@@ -366,7 +367,7 @@ read_number16:
 ; ################################################################;
 
 read_number32:
-    push, ebp
+    push ebp
     mov ebp, esp
     sub esp, 16
 
