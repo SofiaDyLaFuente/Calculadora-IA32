@@ -65,7 +65,7 @@ multiplicacao:
 .multiplica_32:
     mov eax, [ebp-4]           ; copia o primeiro número da pilha local para o registrador EAX
     imul dword [ebp-8]         ; multiplica o segundo número com o primeiro deixando o resultado em EAX
-    jo .overflow 
+    jo .overflow               ; se overflow, pula para mensagem de erro
     mov [ebp-12], eax          ; armazena o resultado na variável local na pilha
     jmp .print_resultado       ; pula para a função de print do resultado
 
